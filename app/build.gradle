@@ -1,0 +1,144 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion rootProject.ext.android.compileSdkVersion
+    buildToolsVersion rootProject.ext.android.buildToolsVersion
+
+    defaultConfig {
+        applicationId "com.example.zhangchi.gradledemo"
+        minSdkVersion rootProject.ext.android.minSdkVersion
+        targetSdkVersion rootProject.ext.android.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        // 只保留zh资源，其它非zh资源不会打包到apk中，主要是为了防止引用的第三方中jar包过多的国际化
+        resConfigs 'zh'
+    }
+
+    // 签名的配置
+    signingConfigs {
+        realse { // 这个名字随意取，在buildTypes中通过signingConfigs. 调用
+            storeFile file(STOREFILE)
+            storePassword STOREPASSWORD
+            keyAlias KEYALIAS
+            keyPassword KEYPASSWORD
+        }
+    }
+
+    buildTypes {
+        // 相当于一个维度dimension（隐藏有一个debug），和productFlavors中的风味进行组合
+        // 一般增加这个风味是为了不同的签名需要
+        // release,debug中的buildConfigField会覆盖productFlavors中同名字的
+        release {
+            signingConfig signingConfigs.realse
+            buildConfigField "boolean", "ISSHOW", "false"
+            // 是否减小apk体积,清理无用的代码
+            minifyEnabled true
+            // 要配合minifyEnabled true使用，清理无用的资源，慎用，可能会删掉一些反射的引用，导致功能出问题
+            shrinkResources true
+            // 混淆文件的配置文件，getDefaultProguardFile('proguard-android.txt')是默认的，在SDK的tools/proguard目录下可以找到
+            // proguard-rules.pro是自定义
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 设置java的编译版本，通常是为了使用某些版本中的一些语言新特性
+    // 一般不用设置
+    /*compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }*/
+
+    // 编译时加速，lint检查有错误时继续打包，不影响使用，最好是把lint错误全部修改
+    // 还有很多配置属性，参照gradle API
+    /*lintOptions {
+        abortOnError false // 如果发现错误，lint是否停止打包
+    }*/
+
+    // 维度组合，productFlavors中不同种类的dimension可以组合，名字根据实际需要自己取
+    // 这个顺序很重要（在前面的优先级高），高优先级会替换掉低优先级的资源及代码
+    flavorDimensions "mode", "channel"
+    productFlavors {
+        trunk {
+            // 维度小组名称
+            dimension "mode"
+            // 修改项目包名，在清单文件中的包名后增加后缀；
+            // 也可以使用applicationId "com.xx.xx" 替换掉默认的包名
+            applicationIdSuffix ".trunk"
+            // 编译后会自动生成在BuildConfig.java中，代码中通过使用BuildConfig.IPADRESS获取后面的值
+            // 参数规则“String”表示参数类型，也可以是boolean等，"IPADRESS"是常量名称，最后一个是内容
+            buildConfigField "String", "IPADRESS", "\"192.168.3.23:8080\""
+            // 还可以增加各种不同的配置，defaultConfig中配置这里都可以用，重复的配置这里的会覆盖掉defaultConfig
+        }
+        guiyang {
+            dimension "mode"
+            applicationIdSuffix ".guiyang"
+            buildConfigField "String", "IPADRESS", "\"192.168.8.47:8082\""
+            resValue "string","zifu_id","guiyang欢迎你"
+        }
+        huawei{
+            dimension "channel"
+            // 给清单文件中的渠道占位符赋值
+            manifestPlaceholders = [CHANNEL_VALUE:"huawei"]
+            resValue "string","zifu_id","huawei欢迎你"
+        }
+        xiaomi{
+            dimension "channel"
+            manifestPlaceholders = [CHANNEL_VALUE:"xiaomi"]
+        }
+    }
+
+    /*sourceSets {
+        trunk {
+            res.srcDirs = ['src/trunk/res']
+            manifest.srcFile 'src/trunk/AndroidManifest.xml'
+        }
+
+        guiyang {
+            res.srcDirs = ['src/guiyang/res']
+            manifest.srcFile 'src/guiyang/AndroidManifest.xml'
+        }
+    }*/
+
+    task bile {
+        println "bile测试"
+    }
+
+    // 修改所有生成的apk的名称
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "${variant.flavorName}_${variant.versionName}_${buildTime()}.apk"
+        }
+    }
+
+}
+
+    // 获取当前日期
+    def buildTime() {
+        def data = new Date()
+        def formattedDate = data.format("yyyyMMdd")
+        return formattedDate
+    }
+
+    /*task(lihaiyang).doLast {
+        println "李海洋开始测试了"
+        havafandf()
+    }
+
+    def havafandf(){
+        println "进入havafandf方法"
+        def a = 1
+        def b = 2
+        println a==b
+    }*/
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation rootProject.ext.dependencies.appcompatV7
+    implementation rootProject.ext.dependencies.constraintVersion
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+//    implementation project(':utils')
+    implementation 'com.lhy.gradledemo.module:utils:1.0.0'
+}

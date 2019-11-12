@@ -1,0 +1,22 @@
+ext{
+    // 可以直接用
+    /*compileSdkVersion = 27
+    buildToolsVersion = "27.0.3"
+    minSdkVersion = 14
+    targetSdkVersion = 27*/
+
+    // 也可以外面套一层
+    android = [
+            compileSdkVersion : 27,
+            buildToolsVersion : "27.0.3",
+            minSdkVersion : 14,
+            targetSdkVersion : 27
+    ]
+
+    dependencies = [
+            appcompatV7 : 'com.android.support:appcompat-v7:27.1.1',
+            constraintVersion : 'com.android.support.constraint:constraint-layout:1.1.3'
+    ]
+
+
+}
